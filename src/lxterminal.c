@@ -811,10 +811,22 @@ static gboolean terminal_vte_button_press_event(VteTerminal * vte, GdkEventButto
         /* Launch xdg-open with the match string. */
         if (match != NULL)
         {
-            gchar * cmd = g_strdup_printf("xdg-open %s", match);
+
+            gchar *proc_cwd, *escaped_cwd, *escaped_match;
+            gchar proc_cwd_link[PATH_MAX];
+
+            g_snprintf(proc_cwd_link, PATH_MAX, "/proc/%d/cwd", term->pid);
+            proc_cwd = g_file_read_link(proc_cwd_link, NULL);
+            escaped_cwd = g_shell_quote(proc_cwd);
+            escaped_match = g_shell_quote(match);
+
+            gchar * cmd = g_strdup_printf("click-to-open %s %s", escaped_cwd, escaped_match);
             if ( ! g_spawn_command_line_async(cmd, NULL))
-                g_warning("Failed to launch xdg-open. The command was `%s'\n", cmd);
+                g_warning("Failed to launch: The command was `%s'\n", cmd);
             g_free(cmd);
+            g_free(proc_cwd);
+            g_free(escaped_cwd);
+            g_free(escaped_match);
             g_free(match);
         }
     }
