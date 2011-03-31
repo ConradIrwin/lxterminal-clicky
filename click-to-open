@@ -1,0 +1,9 @@
+#!/bin/bash
+
+[ `vim --serverlist | grep CLICKY` ] || (lxterminal -e 'env VIMRUNTIME=/0/1/vim/runtime/ vim --servername CLICKY'; sleep 1)
+
+# FIXME
+file=$2
+[ `expr substr "$file" 1 1` == / ] || file=$1/$2
+
+vim --servername CLICKY --remote-send ":e $file<CR>"
