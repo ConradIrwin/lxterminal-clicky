@@ -2,8 +2,28 @@
 
 [ `vim --serverlist | grep CLICKY` ] || (lxterminal -e 'env VIMRUNTIME=/0/1/vim/runtime/ vim --servername CLICKY'; sleep 1)
 
-# FIXME
 file=$2
-[ `expr substr "$file" 1 1` == / ] || file=$1/$2
 
-vim --servername CLICKY --remote-send ":e $file<CR>"
+if [ -d "$1/.git" ]
+then
+    # git-show commit hashes.
+    # TODO: If the previous git show caused a pager to open, we oughta quit it.
+    if git --git-dir="$1/.git" rev-parse --verify --quiet "$2"
+    then
+        vim --servername CLICKY --remote-send ":cd $1<CR>:!git show $2<CR>"
+        exit
+    fi
+
+    # For diffs (TODO: check that the files don't exist with a/ or b/ first?)
+    file=${file#a/}
+    file=${file#b/}
+fi
+
+# There's got to be a nice way of absolutising a file name.
+[ `expr substr "$file" 1 1` = / ] || file=$1/$file
+
+# Edit the file
+vim --servername CLICKY --remote-send ":e ${file%%:*}<CR>"
+
+# Jump to the right line if a line is present.
+[ "${file#*:}" ] && vim --servername CLICKY --remote-send ":${file#*:}<CR><CR>"
